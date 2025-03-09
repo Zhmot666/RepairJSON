@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import configparser
 from pathlib import Path
 from datetime import datetime
 
@@ -69,12 +70,40 @@ def read_file_with_encoding(file_path):
     
     raise ValueError(f"Не удалось прочитать файл ни с одной из кодировок: {encodings}")
 
-def main():
-    # Пути к файлам
-    source_path = r'e:\Базы7\Экзон\Зарплата\ExtForms'
-    target_path = r'e:\22\3.json'
+def read_config():
+    """
+    Читает конфигурацию из файла repair.ini
+    """
+    config = configparser.ConfigParser()
     
+    # Определяем путь к ini файлу относительно текущего скрипта
+    ini_path = Path(__file__).parent / 'repair.ini'
+    
+    if not ini_path.exists():
+        raise FileNotFoundError(f"Файл конфигурации не найден: {ini_path}")
+    
+    config.read(ini_path, encoding='utf-8')
+    
+    if 'Paths' not in config:
+        raise ValueError("Секция 'Paths' не найдена в файле конфигурации")
+    
+    required_params = ['source_path', 'target_dir', 'target_file']
+    for param in required_params:
+        if param not in config['Paths']:
+            raise ValueError(f"Параметр '{param}' не найден в файле конфигурации")
+    
+    return {
+        'source_path': config['Paths']['source_path'],
+        'target_path': str(Path(config['Paths']['target_dir']) / config['Paths']['target_file'])
+    }
+
+def main():
     try:
+        # Читаем конфигурацию
+        config = read_config()
+        source_path = config['source_path']
+        target_path = config['target_path']
+        
         # Получаем список всех JSON файлов в директории
         json_files = list(Path(source_path).glob('*.json'))
         
@@ -121,6 +150,7 @@ def main():
         
     except Exception as ex:
         print(f"Произошла ошибка: {str(ex)}")
+        input("Нажмите Enter для завершения...")  # Пауза перед закрытием
 
 if __name__ == '__main__':
     main() 
