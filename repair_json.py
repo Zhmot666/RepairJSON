@@ -4,6 +4,7 @@ import re
 import configparser
 from pathlib import Path
 from datetime import datetime
+import sys
 
 def fix_empty_value(match):
     """
@@ -76,8 +77,16 @@ def read_config():
     """
     config = configparser.ConfigParser()
     
-    # Определяем путь к ini файлу относительно текущего скрипта
-    ini_path = Path(__file__).parent / 'repair.ini'
+    # Определяем путь к exe файлу или скрипту
+    if getattr(sys, 'frozen', False):
+        # Если это exe-файл
+        application_path = Path(sys.executable).parent
+    else:
+        # Если это python-скрипт
+        application_path = Path(__file__).parent
+    
+    # Путь к ini файлу относительно приложения
+    ini_path = application_path / 'repair.ini'
     
     if not ini_path.exists():
         raise FileNotFoundError(f"Файл конфигурации не найден: {ini_path}")
